@@ -1,0 +1,740 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    df_print: kable
+    number_sections: true
+header-includes:
+  - \usepackage{lastpage}
+  - \usepackage{fancyhdr}
+  - \usepackage{graphicx}
+  - \usepackage{xcolor}
+---
+
+\begin{titlepage}
+\begin{center}
+
+\LARGE{\textit{Master 2 Ingénierie Mathématiques et Biostatistique \\ Université Paris Cité}}
+
+\vspace{0.5cm}
+2025--2026
+
+\vfill
+
+\Large{\textcolor{red}{\textbf{PROJET DE SURVIE}}}
+
+\vspace{0.3cm}
+\noindent\rule{\textwidth}{1mm}
+
+\vspace{0.3cm}
+{\LARGE\bfseries \textcolor{blue}{
+Survival analysis in longitudinal studies for recurent events : Applications and Challenges
+}\par}
+
+\vspace{0.3cm}
+\noindent\rule{\textwidth}{1mm}
+
+\vfill
+
+\begin{minipage}[t]{0.45\textwidth}
+\textbf{Réalisé par :}
+
+\vspace{0.3cm}
+\begin{itemize}
+  \item \Large{Kouldjim ELIE}
+  \item \Large{Rytrace Amedée TITO}
+  \item \Large{Esaie Gedeon PALESSONGA}
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.50\textwidth}
+\textbf{Professeur :}
+
+\vspace{0.3cm}
+\Large{Dr Flora ALARCON }
+\end{minipage}
+
+\vfill
+
+\textit{Année académique : 2025--2026}
+
+\end{center}
+\end{titlepage}
+
+\renewcommand{\contentsname}{Table des matières}
+\tableofcontents
+\newpage
+
+\text{ }
+
+
+# Partie I : Introduction
+
+## Aspect de l’analyse de survie étudié dans l’article
+
+L’article s’intéresse à **l’analyse de survie des événements récurrents** dans le cadre des *études longitudinales*.
+
+Il met particulièrement l’accent sur :
+
+- les **modèles adaptés** aux événements répétés chez un même individu ;
+- les **limites du modèle de Cox classique**, notamment l’ignorance de la **corrélation intra-sujet** ;
+- la **comparaison de modèles étendus** (Andersen–Gill, PWP, marginal, fragilité) ;
+- la nécessité d’un choix de modèle tenant compte de la **dépendance des événements** et du **contexte biologique**.
+
+## Prise en compte des événements récurrents dans la littérature
+
+Les auteurs soulignent que les événements récurrents sont souvent **insuffisamment pris en compte** dans les analyses de survie classiques.
+
+### Pratiques fréquemment observées et leurs limites
+
+#### Utilisation du modèle de Cox standard
+
+- Application du modèle de Cox **sans tenir compte** de la répétition des événements.
+- Hypothèse irréaliste d’**indépendance des événements** successifs.
+
+#### Absence de prise en compte de la corrélation intra-sujet
+
+- Non-considération de la **dépendance entre événements** survenant chez un même individu.
+
+#### Approches simplifiées et sources de biais
+
+- Analyse limitée au **premier** ou au **dernier événement**.
+- Traitement des événements comme **statistiquement indépendants**.
+
+## Conséquences sur l’erreur de type I dans les tests d’hypothèses
+
+L’ignorance de la **corrélation intra-sujet** entraîne une **augmentation du risque d’erreur statistique**.
+
+### Impact sur l’erreur de type I
+
+- **Sous-estimation de la variance** ;
+- **erreurs standard trop faibles** ;
+- **augmentation de l’erreur de type I** ;
+- **surestimation de la significativité** des effets.
+
+### Analogie avec les données de mesures répétées
+
+Cette situation est comparable à l’**analyse de mesures répétées** réalisée sans correction de la corrélation :
+
+1. des observations **dépendantes** sont supposées indépendantes ;
+2. cela conduit à :
+   - une **puissance artificiellement élevée** ;
+   - un **excès de faux positifs**.
+
+
+   
+   
+# Partie II : Matériels et méthodes
+
+## Question 1
+
+### Variable d'intérêt
+
+- La variable d'intérêt est la **survenue d'une infection des voies respiratoires supérieures (Upper Respiratory Infection - URI)** chez des nourrissons indiens.
+
+### Nature récurrente de l'événement
+
+- Oui, il s'agit d'un **cas typique d'événements récurrents**.
+- Les nourrissons pouvaient présenter **plusieurs épisodes d'URI** au cours de la première année de vie.
+- Les données montrent que le nombre de récidives variait de **0 à 10 événements par enfant** pendant la période de suivi.
+- Cela confirme la **nature répétée et non unique** du phénomène étudié.
+
+## Question 2
+
+### Variable de censure
+
+La variable de censure dans cette étude est le **statut d'observation de l'infection (URI Status)**, codée comme suit :
+
+- **1** : l’événement (URI) est survenu à la fin de l’intervalle de temps.  
+- **0** : l’observation est censurée (aucun événement observé à la fin du suivi).
+
+### Sources de censure 
+
+- **Fin du suivi** : la durée maximale de suivi était de **365 jours** (première année de vie).  
+- **Perte de vue** : **17 nourrissons (8,1 %) ** n’ont pas été revus après la naissance.  
+- **Décès** : **3 nourrissons** sont décédés au cours de l’étude.
+
+## Question 3
+
+### Description des données 
+L'**étude longitudinale** a inclus **210 nourrissons** d’une **zone rurale indienne (février 2009 – août 2010)**. Chaque mois, un **écouvillonnage nasopharyngé** a été réalisé et des **données parentales** recueillies. **193 enfants** ont présenté au moins une **URI** ; le **nombre maximum de récurrences** a été de **10**. **Onze facteurs de risque potentiels** ont été enregistrés (**socio-démographiques, environnementaux, cliniques**). Le **suivi médian** était de **9 visites**. **Trois nourrissons** sont décédés durant l’étude.
+
+## Question 4
+
+### Explication de la Figure 1 et des méthodes
+
+La **Figure 1** illustre quatre représentations des **temps d’événements récurrents** pour 10 enfants :
+
+- **Données brutes** : chronologie des **URI** pour chaque enfant.  
+- **Processus de comptage (Andersen-Gill, AG)** : **intervalles de risque contigus** depuis l’entrée dans l’étude, avec découpe à chaque événement.  
+- **Temps total (modèle marginal)** : temps mesuré depuis l’entrée jusqu’à chaque événement ; chaque événement traité comme un **type différent**.  
+- **Temps de latence (PWP-Gap)** : temps écoulé depuis le **dernier événement**.  
+
+**Distinction des modèles** :  
+
+- **Andersen-Gill** : **risque de base commun** à tous les événements ; processus de comptage avec intervalles contigus.  
+- **PWP (total time)** : **stratifié par rang d’événement** ; un individu est à risque pour le k-ième événement seulement après le (k-1)-ième.  
+- **PWP-Gap** : similaire au PWP total time, mais le **temps est mesuré depuis le dernier événement**.  
+- **Modèle marginal (Wei, Lin, Weissfeld)** : chaque événement considéré comme un **type différent**, tous les individus sont à risque pour tous les événements dès l’entrée dans l’étude.
+
+
+# Partie III : 
+
+## Simulations (n = 1000 individus)
+Nous avons simulé pour 1000 individus , l'ensemble des trois variables (**voir le code R sur Annexe1**)
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
+library(survival)
+set.seed(2025)
+n <- 1000
+#  Génération des covariables
+season <- sample(1:3, n, replace = TRUE, prob = c(0.118, 0.581, 0.301))
+season_jul_oct <- ifelse(season == 2, 1, 0)
+season_nov_feb <- ifelse(season == 3, 1, 0)
+gender <- rbinom(n, 1, 0.576)   # 1 = Male, 0 = Female
+weight <- rbinom(n, 1, 0.362)   # 1 = ≤2.5kg, 0 = >2.5kg
+#  Hazard ratio individuel
+log_hr <- log(2.27) * season_jul_oct + 
+          log(1.43) * season_nov_feb + 
+          log(0.95) * gender + 
+          log(1.14) * weight
+hr <- exp(log_hr)
+#  Hazard de base
+lambda_ref <- log(2)/98
+#  Simulation des temps de survie
+lambda_ind <- lambda_ref * hr
+event_time <- rexp(n, rate = lambda_ind)
+# Censure administrative
+survival_time <- pmin(event_time, 365)
+status <- as.numeric(event_time <= 365)
+#  Création du data.frame
+sim_data <- data.frame(
+  id = 1:n,
+  survival_time = round(survival_time, 1),
+  status = status,
+  season = factor(season, levels = 1:3,
+                  labels = c("March-June", "July-October", "November-February")),
+  season_jul_oct = season_jul_oct,
+  season_nov_feb = season_nov_feb,
+  gender = factor(gender, levels = c(0,1), labels = c("Female","Male")),
+  weight = factor(weight, levels = c(0,1), labels = c(">2.5kg","≤2.5kg")),
+  hr = hr
+)
+```
+
+## Analyse Descriptifs
+
+```{r,echo=FALSE}
+# Analyse Descriptifs
+desc_table <- data.frame(
+  Variable = c("March–June", "July–October", "November–February",
+               "Male", "≤2.5kg", "Censored"),
+  Percentage = round(c(
+    prop.table(table(sim_data$season))[1:3],
+    prop.table(table(sim_data$gender))["Male"],
+    prop.table(table(sim_data$weight))["≤2.5kg"],
+    mean(sim_data$status == 0)
+  ) * 100, 1)
+)
+desc_table
+```
+
+## Tableau comparatifs: Modele de cox resultat comparatifs
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
+#  Modèle de Cox
+sim_data$gender_num <- ifelse(sim_data$gender == "Male", 1, 0)
+sim_data$weight_num <- ifelse(sim_data$weight == "≤2.5kg", 1, 0)
+cox_model <- coxph(Surv(survival_time, status) ~
+                     season_jul_oct + season_nov_feb +
+                     gender_num + weight_num,
+                   data = sim_data)
+
+
+### Modele de cox resultat
+#summary(cox_model)
+cox_table <- data.frame(
+  Variable = names(coef(cox_model)),
+  HR_theorique = c(2.27, 1.43, 0.95, 1.14),
+  HR_estime = round(exp(coef(cox_model)),3),
+  IC95 = paste0(
+    round(exp(confint(cox_model))[,1],3),
+    " – ",
+    round(exp(confint(cox_model))[,2],3)
+  ),
+  p_value = round(summary(cox_model)$coef[,5],3)
+)
+cox_table
+```
+
+## Courbes de Kaplan-Meier par saison
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+fit_season <- survfit(Surv(survival_time, status) ~ season, data = sim_data)
+cols <- c("blue", "red", "darkgreen")
+plot(fit_season,
+     col = cols,
+     lwd = 2,
+     main = "Courbes de survie par saison",
+     xlab = "Temps (jours)",
+     ylab = "Probabilité de survie")
+legend("topright",
+       legend = levels(sim_data$season),
+       col = cols,
+       lwd = 2,
+       title = "Saison")
+```
+
+# Partie III : Résultats
+##  Choix du jeu de données et affichages des 3 premières observations
+
+```{r,warning=FALSE,message=FALSE,echo=FALSE}
+library(survival)
+library(dplyr)
+library(survival)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+# Chargement des données
+data(cgd)
+head(cgd,3)
+```
+
+## Description des variables
+- **id** : identifiant du patient (1 à 128) , **center** : centre médical où le patient est suivi (ex. Scripps Institute)   **random** : date de randomisation du patient  **treat** : traitement reçu (rIFN-g / placebo)   **sex** : sexe du patient (male / female) , **age** : âge du patient (en années) , **height** : taille du patient (en cm) **weight** : poids du patient (en kg)  **inherit** : type d’héritage génétique (ex. autosomal), **steroids** : utilisation de stéroïdes (0 = non, 1 = oui) , **propylac** : prophylaxie antibiotique (0 = non, 1 = oui) , **hos.cat** : catégorie hospitalière ou région (ex. US:other) , **tstart** : temps de début de l’intervalle d’observation (en jours),  **enum** : numéro de l’événement pour ce patient , **tstop** : temps de fin de l’intervalle d’observation (en jours) , **status** : indicateur d’événement (1 = infection, 0 = censure)  
+
+## Structure des données
+
+Ce jeu de données contient des événements récurrents d’infections chez des patients atteints de granulomatose chronique (CGD).  
+Chaque patient peut avoir plusieurs épisodes d’infection (événements récurrents).  
+Les données sont sous format **intervalle de suivi**, permettant de modéliser précisément les événements récurrents avec `tstart` et `tstop`.
+
+```{r,echo=FALSE}
+# Statistiques descriptives synthétiques
+events_per_patient <- table(cgd$id)
+
+desc_table <- data.frame(
+  Indicateur = c(
+    "Nombre total de patients",
+    "Nombre total d'observations",
+    "Nombre moyen d'événements par patient",
+    "Nombre minimum d'événements par patient",
+    "Nombre maximum d'événements par patient",
+    "Proportion de patients avec ≥ 1 événement (%)"
+  ),
+  Valeur = c(
+    length(unique(cgd$id)),
+    nrow(cgd),
+    round(mean(events_per_patient), 2),
+    min(events_per_patient),
+    max(events_per_patient),
+    round(
+      mean(
+        cgd %>%
+          group_by(id) %>%
+          summarize(has_event = any(status == 1)) %>%
+          pull(has_event)
+      ) * 100, 1
+    )
+  )
+)
+
+desc_table
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+#  Préparation des données
+cgd_data <- cgd %>%
+  group_by(id) %>%
+  mutate(
+    enum = row_number(),      # Rang de l'événement
+    gap = tstop - tstart      # Temps d'écart depuis le dernier événement
+  ) %>%
+  ungroup() %>%
+  mutate(
+    treatment_num = ifelse(treat  == "rIFN-g", 1, 0),
+    sex_num = ifelse(sex == "male", 1, 0),
+    steroids_num = ifelse(steroids == 1, 1, 0),
+    propylac_num = ifelse(propylac == 1, 1, 0)
+  )
+```
+
+##  Analyse des récidives d'infections chez les patients atteints de granulomatose chronique (CGD)
+
+Les modèles suivants ont été construits : Modèle de Cox standard (premier événement uniquement);
+; Modèle d'Andersen-Gill (AG); Modèle PWP Temps Total; Modèle PWP Temps d'Écart; Modèle Marginal (WLW); Modèle de Fragilité (Gamma) . Voir( Annexe2)
+
+```{r,message=FALSE,warning=FALSE,echo=FALSE}
+#  Modèles de Cox pour événements récurrents
+## Modèle de Cox standard (premier événement uniquement)
+first_events <- cgd_data %>%
+  group_by(id) %>%
+  filter(row_number() == 1) %>%
+  ungroup()
+
+cox_standard <- coxph(Surv(tstop, status) ~ treatment_num + age + sex_num, 
+                      data = first_events)
+# Modèle d'Andersen-Gill (AG)
+ag_model <- coxph(Surv(tstart, tstop, status) ~ treatment_num + age + sex_num + 
+                    steroids_num + propylac_num + cluster(id), 
+                  data = cgd_data)
+# Modèle PWP Temps Total (PWP-TT)
+pwp_tt_model <- coxph(Surv(tstart, tstop, status) ~ treatment_num + age + sex_num + 
+                        steroids_num + propylac_num + cluster(id) + strata(enum), 
+                      data = cgd_data)
+# Modèle PWP Temps d'Écart (PWP-GT)
+pwp_gt_model <- coxph(Surv(gap, status) ~ treatment_num + age + sex_num + 
+                        steroids_num + propylac_num + cluster(id) + strata(enum), 
+                      data = cgd_data)
+#  Modèle marginal WLW
+max_events <- max(cgd_data$enum)
+cgd_marginal <- cgd_data %>%
+  group_by(id) %>%
+  do({
+    patient_data <- .
+    n_events <- nrow(patient_data)
+    
+    expand.grid(enum = 1:max_events) %>%
+      mutate(
+        id = patient_data$id[1],
+        tstart = 0,
+        tstop = ifelse(enum <= n_events, patient_data$tstop[enum], max(patient_data$tstop)),
+        status = ifelse(enum <= n_events, patient_data$status[enum], 0),
+        treatment_num = patient_data$treatment_num[1],
+        age = patient_data$age[1],
+        sex_num = patient_data$sex_num[1],
+        steroids_num = patient_data$steroids_num[1],
+        propylac_num = patient_data$propylac_num[1]
+      )
+  }) %>%
+  ungroup()
+
+wlw_model <- coxph(Surv(tstart, tstop, status) ~ treatment_num + age + sex_num + 
+                     steroids_num + propylac_num + cluster(id) + strata(enum), 
+                   data = cgd_marginal)
+
+# Modèle de fragilité (gamma)
+frailty_model <- coxph(Surv(tstart, tstop, status) ~ treatment_num + age + sex_num + 
+                         steroids_num + propylac_num + frailty(id, distribution = "gamma"), 
+                       data = cgd_data)
+```
+
+
+```{r,echo=FALSE,results='hide'}
+cat("\n=== Modèle de Cox standard (premier événement uniquement) ===\n")
+print(summary(cox_standard))
+
+cat("\n=== Modèle d'Andersen-Gill (AG) ===\n")
+print(summary(ag_model))
+
+cat("\n=== Modèle PWP Temps Total ===\n")
+print(summary(pwp_tt_model))
+
+
+cat("\n=== Modèle PWP Temps d'Écart ===\n")
+print(summary(pwp_gt_model))
+
+
+cat("\n=== Modèle Marginal (WLW) ===\n")
+print(summary(wlw_model))
+
+
+cat("\n=== Modèle de Fragilité (Gamma) ===\n")
+print(summary(frailty_model))
+
+```
+
+
+```{r,warning=FALSE,echo=FALSE,echo=FALSE}
+#  Extraction des Hazard Ratios (HR) et IC 95%
+extract_HR_robust <- function(model, var_name = "treatment_num") {
+  model_summary <- summary(model)
+  coefs <- model_summary$coefficients
+  if (is.null(coefs) || nrow(coefs) == 0) return(data.frame(HR = NA, Lower95 = NA, Upper95 = NA))
+  
+  row_names <- rownames(coefs)
+  idx <- if (var_name %in% row_names) which(row_names == var_name) else grep(var_name, row_names, ignore.case = TRUE)[1]
+  if (is.na(idx)) return(data.frame(HR = NA, Lower95 = NA, Upper95 = NA))
+  
+  coef_val <- coefs[idx, "coef"]
+  se_col <- intersect(c("se(coef)", "se.coef.", "se", "Std. Error"), colnames(coefs))[1]
+  se_val <- if (!is.na(se_col)) coefs[idx, se_col] else sqrt(vcov(model)[var_name, var_name])
+  
+  HR <- exp(coef_val)
+  lower <- exp(coef_val - 1.96 * se_val)
+  upper <- exp(coef_val + 1.96 * se_val)
+  data.frame(HR = round(HR, 3), Lower95 = round(lower, 3), Upper95 = round(upper, 3))
+}
+extract_HR_auto <- function(model) {
+  res <- tryCatch({
+    if ("treatment_num" %in% names(coef(model))) extract_HR_robust(model) else stop("NA")
+  }, error = function(e) data.frame(HR = NA, Lower95 = NA, Upper95 = NA))
+  return(res)
+}
+# Liste des modèles
+models_list <- list(
+  cox_standard = cox_standard,
+  ag_model = ag_model,
+  pwp_tt_model = pwp_tt_model,
+  pwp_gt_model = pwp_gt_model,
+  wlw_model = wlw_model,
+  frailty_model = frailty_model
+)
+# Extraction des résultats
+results <- lapply(models_list, extract_HR_auto)
+hr_table <- do.call(rbind, results)
+hr_table$Modèle <- rownames(hr_table)
+rownames(hr_table) <- NULL
+hr_table <- hr_table[, c("Modèle", "HR", "Lower95", "Upper95")]
+hr_table$IC_95 <- paste0(hr_table$Lower95, " - ", hr_table$Upper95)
+```
+
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
+cat("\n=== Tableau comparatif des HR pour le traitement ===\n")
+print(hr_table[, c("Modèle", "HR", "IC_95")])
+```
+
+NB:  ***cox_standard***: Modèle de Cox standard (premier événement uniquement);
+***ag_model*** : Modèle d'Andersen-Gill (AG); ***pwp_tt_model*** : Modèle PWP Temps Total; ***pwp_gt_model*** : Modèle PWP Temps d'Écart; ***wlw_model***: Modèle Marginal (WLW); ***frailty_model****: Modèle de Fragilité (Gamma)
+
+###  Figure comparative des risques cumulés
+
+```{r,warning=FALSE,message=FALSE,echo=FALSE}
+#  Figure comparative des risques cumulés
+get_cumulative_hazard <- function(model, strata_level = 1) {
+  basehaz_result <- suppressWarnings(basehaz(model, centered = FALSE))
+  
+  # Vérifier si basehaz_result est vide
+  if (nrow(basehaz_result) == 0) {
+    warning("Aucun risque cumulé calculé pour ce modèle / cette strate.")
+    return(NULL)
+  }
+  
+  # Filtrer par strate si nécessaire
+  if ("strata" %in% names(basehaz_result)) {
+    strata_level <- if (is.numeric(strata_level)) unique(basehaz_result$strata)[strata_level] else strata_level
+    basehaz_result <- basehaz_result[basehaz_result$strata == strata_level, ]
+  }
+  
+  # Vérifier que la strate n'est pas vide
+  if (nrow(basehaz_result) == 0) {
+    warning(paste("Aucun événement pour la strate:", strata_level))
+    return(NULL)
+  }
+  
+  return(basehaz_result)
+}
+ch_ag <- get_cumulative_hazard(ag_model)
+ch_frailty <- get_cumulative_hazard(frailty_model)
+ch_pwp_tt <- get_cumulative_hazard(pwp_tt_model, 1)
+ch_pwp_gt <- get_cumulative_hazard(pwp_gt_model, 1)
+
+par(mfrow = c(1, 2))
+
+# AG vs Fragilité
+plot(ch_ag$time, ch_ag$hazard, type = "s", col = "blue", lwd = 2,
+     xlab = "Temps (jours)", ylab = "Risque cumulé",
+     main = "Comparaison des risques cumulés\nAG vs Modèle de Fragilité",
+     ylim = c(0, max(c(ch_ag$hazard, ch_frailty$hazard), na.rm = TRUE) * 1.1),
+     xlim = c(0, max(c(ch_ag$time, ch_frailty$time), na.rm = TRUE)))
+lines(ch_frailty$time, ch_frailty$hazard, type = "s", col = "red", lwd = 2)
+legend("topleft", legend = c("Andersen-Gill", "Fragilité (gamma)"),
+       col = c("blue", "red"), lwd = 2, bty = "n", cex = 0.8)
+
+# Plusieurs modèles
+plot(ch_ag$time, ch_ag$hazard, type = "s", col = "blue", lwd = 2,
+     xlab = "Temps (jours)", ylab = "Risque cumulé",
+     main = "Comparaison des risques cumulés\nPlusieurs modèles",
+     ylim = c(0, max(c(ch_ag$hazard, ch_frailty$hazard, ch_pwp_tt$hazard, ch_pwp_gt$hazard), na.rm = TRUE) * 1.1))
+lines(ch_frailty$time, ch_frailty$hazard, type = "s", col = "red", lwd = 2)
+lines(ch_pwp_tt$time, ch_pwp_tt$hazard, type = "s", col = "darkgreen", lwd = 2)
+lines(ch_pwp_gt$time, ch_pwp_gt$hazard, type = "s", col = "orange", lwd = 2)
+legend("topleft", legend = c("Andersen-Gill", "Fragilité", "PWP-TT (1ère strate)", "PWP-GT (1ère strate)"),
+       col = c("blue", "red", "darkgreen", "orange"), lwd = 2, bty = "n", cex = 0.8)
+
+par(mfrow = c(1, 1))
+
+```
+
+
+### Resultat de l'analyse de la fragilité
+
+```{r,warning=FALSE,message=FALSE,echo=FALSE}
+#  Forest plot des HR
+forest_data <- hr_table
+forest_plot <- ggplot(forest_data, aes(x = HR, y = reorder(Modèle, HR))) +
+  geom_point(size = 3, color = "blue") +
+  geom_errorbarh(aes(xmin = Lower95, xmax = Upper95), height = 0.2, color = "blue") +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "red", alpha = 0.7) +
+  scale_x_continuous(trans = "log10") +
+  labs(title = "Forest plot des Hazard Ratios pour le traitement",
+       x = "Hazard Ratio (échelle logarithmique)",
+       y = "Modèle",
+       caption = "Référence: HR = 1 (ligne rouge)") +
+  theme_minimal() +
+  theme(panel.grid.major = element_line(color = "gray90"),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+print(forest_plot)
+# 7. Analyse de la fragilité et ICC
+frailty_summary <- summary(frailty_model)
+theta <- frailty_summary$theta
+cat("\n=== Analyse de la fragilité ===\n")
+if (!is.null(theta) && length(theta) == 1) {
+  icc <- theta / (theta + 2)
+  cat("Variance de fragilité estimée:", round(theta, 4), "\n")
+  cat("Corrélation intra-classe estimée (ICC):", round(icc, 4), "\n")
+  
+  if (theta < 0.1) {
+    cat("Interprétation: Faible hétérogénéité entre patients\n")
+  } else if (theta < 0.5) {
+    cat("Interprétation: Hétérogénéité modérée entre patients\n")
+  } else {
+    cat("Interprétation: Forte hétérogénéité entre patients\n")
+  }
+} else {
+  cat("Aucune estimation de fragilité disponible (theta NULL ou non calculé).\n")
+}
+```
+
+### Comparaison des modèles (LogLik, AIC, BIC)
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+
+# 8. Comparaison des modèles (LogLik, AIC, BIC)
+get_model_info <- function(model, model_name) {
+  data.frame(
+    Modèle = model_name,
+    LogLik = round(logLik(model), 2),
+    AIC = round(AIC(model), 2),
+    BIC = round(BIC(model), 2),
+    N_params = length(coef(model)),
+    N_events = model$nevent,
+    stringsAsFactors = FALSE
+  )
+}
+
+model_comparison <- rbind(
+  get_model_info(cox_standard, "Cox standard"),
+  get_model_info(ag_model, "Andersen-Gill"),
+  get_model_info(pwp_tt_model, "PWP-TT"),
+  get_model_info(pwp_gt_model, "PWP-GT"),
+  get_model_info(wlw_model, "WLW"),
+  get_model_info(frailty_model, "Fragilité")
+)
+
+print(model_comparison)
+
+```
+
+## Discussion et interprétation des résultats
+
+###  Effet du traitement (rIFN-g vs placebo)
+
+- Tous les modèles montrent un effet protecteur significatif du traitement (p < 0.01).
+- Les Hazard Ratios (HR) varient de 0.244 (WLW) à 0.405 (PWP-GT).
+- Le traitement réduit donc le risque d'infection de 60% à 76%.
+
+###  Comparaison des modèles
+
+- **Cox standard** : HR = `r hr_table$HR[hr_table$Modèle=="cox_standard"]`  
+  Ignore les événements récurrents (1er événement seulement).
+
+- **Andersen-Gill** : HR = `r hr_table$HR[hr_table$Modèle=="ag_model"]`  
+  Tous les événements traités comme indépendants avec correction robuste.
+
+- **PWP-TT et PWP-GT** : HR = `r paste(hr_table$HR[hr_table$Modèle %in% c("pwp_tt_model","pwp_gt_model")], collapse = ", ")`  
+  Conditionnels au rang de l'événement.
+
+- **WLW** : HR = `r hr_table$HR[hr_table$Modèle=="wlw_model"]`  
+  Chaque événement traité comme type distinct.
+
+- **Fragilité** : HR = `r hr_table$HR[hr_table$Modèle=="frailty_model"]`  
+  `r if(!is.null(theta) && length(theta)==1) paste0("Variance de fragilité = ", round(as.numeric(theta),4), " (ICC = ", round(as.numeric(icc),4), ")") else "Variance de fragilité non disponible"`
+
+
+
+# Conclusion
+
+Ce travail met en évidence **l’intérêt des modèles de survie adaptés aux événements récurrents** dans les *études longitudinales*.  
+Les résultats montrent de façon cohérente que **le traitement rIFN-g réduit significativement le risque d’infection**, quel que soit **le modèle statistique utilisé**.
+
+Néanmoins, les différences observées entre les estimations issues du **modèle de Cox standard** et celles obtenues à partir des *modèles Andersen-Gill, PWP, marginal (WLW) et à fragilité* soulignent **l’importance de prendre en compte la dépendance intra-individu** entre événements successifs.  
+Le *modèle de Cox classique*, limité au **premier événement**, apparaît **insuffisant** pour analyser correctement des *données à événements récurrents*.
+
+Le *modèle à fragilité* met en évidence **une hétérogénéité non observée entre patients**, confirmant l’existence d’une **corrélation intra-sujet** dans la survenue des infections.  
+Ainsi, **le choix du modèle** doit être guidé par *la structure des données*, *la question scientifique posée* et *le type de dépendance entre événements*, afin de garantir **des inférences statistiques valides et robustes**.
+
+
+\newpage
+# Annexe
+
+## Annexe1. Code Source pour la simulation des donnees
+
+```{r,results='hide',message=FALSE,warning=FALSE}
+library(survival)
+set.seed(2025)
+n <- 1000
+#  Génération des covariables
+season <- sample(1:3, n, replace = TRUE, prob = c(0.118, 0.581, 0.301))
+season_jul_oct <- ifelse(season == 2, 1, 0)
+season_nov_feb <- ifelse(season == 3, 1, 0)
+gender <- rbinom(n, 1, 0.576)   # 1 = Male, 0 = Female
+weight <- rbinom(n, 1, 0.362)   # 1 = ≤2.5kg, 0 = >2.5kg
+#  Hazard ratio individuel
+log_hr <- log(2.27) * season_jul_oct + 
+          log(1.43) * season_nov_feb + 
+          log(0.95) * gender + 
+          log(1.14) * weight
+hr <- exp(log_hr)
+#  Hazard de base
+lambda_ref <- log(2)/98
+#  Simulation des temps de survie
+lambda_ind <- lambda_ref * hr
+event_time <- rexp(n, rate = lambda_ind)
+# Censure administrative
+survival_time <- pmin(event_time, 365)
+status <- as.numeric(event_time <= 365)
+#  Création du data.frame
+sim_data <- data.frame(
+  id = 1:n,
+  survival_time = round(survival_time, 1),
+  status = status,
+  season = factor(season, levels = 1:3,
+                  labels = c("March-June", "July-October", "November-February")),
+  season_jul_oct = season_jul_oct,
+  season_nov_feb = season_nov_feb,
+  gender = factor(gender, levels = c(0,1), labels = c("Female","Male")),
+  weight = factor(weight, levels = c(0,1), labels = c(">2.5kg","≤2.5kg")),
+  hr = hr
+)
+```
+
+## Annexe2. Resultats des modèles pour les données sur les infections recurenntes chez les personnes atteints de gramulomatose chronique.
+
+```{r,echo=FALSE}
+cat("\n=== Modèle de Cox standard (premier événement uniquement) ===\n")
+print(summary(cox_standard))
+
+cat("\n=== Modèle d'Andersen-Gill (AG) ===\n")
+print(summary(ag_model))
+
+cat("\n=== Modèle PWP Temps Total ===\n")
+print(summary(pwp_tt_model))
+
+
+cat("\n=== Modèle PWP Temps d'Écart ===\n")
+print(summary(pwp_gt_model))
+
+
+cat("\n=== Modèle Marginal (WLW) ===\n")
+print(summary(wlw_model))
+
+
+cat("\n=== Modèle de Fragilité (Gamma) ===\n")
+print(summary(frailty_model))
+
+```
+
+
